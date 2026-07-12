@@ -35,9 +35,58 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
 
+    # State Management
+  provider: ^6.1.5
+
+  # Camera
+  camera: ^0.11.2+1
+
+  # Image Picker
+  image_picker: ^1.2.0
+
+  # Crop Image
+  image_cropper: ^9.1.0
+
+  # TensorFlow Lite (LiteRT)
+  tflite_flutter: ^0.11.0
+
+  # Image Processing
+  image: ^4.5.4
+
+  # Google ML Kit
+  google_mlkit_image_labeling: ^0.14.1
+
+  # Gemini
+  google_generative_ai: ^0.4.7
+
+  # HTTP
+  http: ^1.5.0
+
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+
+  # Path
+  path_provider: ^2.1.5
+
+  # Permission
+  permission_handler: ^12.0.1
+
+  # SVG
+  flutter_svg: ^2.2.0
+
+  # Loading
+  flutter_spinkit: ^5.2.2
+
+  # Splash
+  flutter_native_splash: ^2.4.6
+
+  # Launcher Icon
+  flutter_launcher_icons: ^0.14.4
+
 dev_dependencies:
   flutter_test:
-    sdk: flutter
+    sdk: flutter  
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
@@ -51,11 +100,29 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icon/
+    - assets/models/
+    - assets/labels/
+    - assets/fonts/
+
+  fonts:
+    - family: Poppins
+      fonts:
+        - asset: assets/fonts/Poppins-Regular.ttf
+        - asset: assets/fonts/Poppins-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Poppins-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Poppins-Bold.ttf
+          weight: 700
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
-  uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
   # assets:

@@ -1,7 +1,18 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 
-class HomePage extends StatelessWidget {
+import '../../services/image_service.dart';
+import '../preview/preview_page.dart';
+
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final ImageService _imageService = ImageService();
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +70,19 @@ class HomePage extends StatelessWidget {
               width: double.infinity,
               height: 55,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                final navigator = Navigator.of(context);
+
+                final File? image = await _imageService.pickImageFromGallery();
+
+                if (!mounted || image == null) return;
+
+                navigator.push(
+                    MaterialPageRoute(
+                    builder: (_) => PreviewPage(imageFile: image),
+                    ),
+                );
+                },
                 icon: const Icon(Icons.photo_library),
                 label: const Text("Pilih dari Galeri"),
               ),
@@ -71,7 +94,19 @@ class HomePage extends StatelessWidget {
               width: double.infinity,
               height: 55,
               child: ElevatedButton.icon(
-                onPressed: () {},
+                onPressed: () async {
+                final navigator = Navigator.of(context);
+
+                final File? image = await _imageService.pickImageFromCamera();
+
+                if (!mounted || image == null) return;
+
+                navigator.push(
+                    MaterialPageRoute(
+                    builder: (_) => PreviewPage(imageFile: image),
+                    ),
+                );
+                },
                 icon: const Icon(Icons.camera_alt),
                 label: const Text("Ambil dari Kamera"),
               ),

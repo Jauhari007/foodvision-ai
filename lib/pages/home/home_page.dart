@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:io';
 
 import '../../services/image_service.dart';
+import '../../services/ml/tflite_service.dart';
 import '../preview/preview_page.dart';
 
 class HomePage extends StatefulWidget {
@@ -13,6 +14,23 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ImageService _imageService = ImageService();
+  final TfliteService _tfliteService = TfliteService();
+  bool _isPickingImage = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _loadModel();
+  }
+
+  Future<void> _loadModel() async {
+    try {
+      await _tfliteService.loadModel();
+    } catch (e) {
+      debugPrint(e.toString()); 
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,17 +89,26 @@ class _HomePageState extends State<HomePage> {
               height: 55,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                final navigator = Navigator.of(context);
+                  if (_isPickingImage) return;
 
-                final File? image = await _imageService.pickImageFromGallery();
+                  _isPickingImage = true;
 
-                if (!mounted || image == null) return;
+                  try {
+                    final navigator = Navigator.of(context);
 
-                navigator.push(
-                    MaterialPageRoute(
-                    builder: (_) => PreviewPage(imageFile: image),
-                    ),
-                );
+                    final File? image =
+                        await _imageService.pickImageFromGallery();
+
+                    if (!mounted || image == null) return;
+
+                    navigator.push(
+                      MaterialPageRoute(
+                        builder: (_) => PreviewPage(imageFile: image),
+                      ),
+                    );
+                  } finally {
+                    _isPickingImage = false;
+                  }
                 },
                 icon: const Icon(Icons.photo_library),
                 label: const Text("Pilih dari Galeri"),
@@ -95,17 +122,26 @@ class _HomePageState extends State<HomePage> {
               height: 55,
               child: ElevatedButton.icon(
                 onPressed: () async {
-                final navigator = Navigator.of(context);
+                  if (_isPickingImage) return;
 
-                final File? image = await _imageService.pickImageFromCamera();
+                  _isPickingImage = true;
 
-                if (!mounted || image == null) return;
+                  try {
+                    final navigator = Navigator.of(context);
 
-                navigator.push(
-                    MaterialPageRoute(
-                    builder: (_) => PreviewPage(imageFile: image),
-                    ),
-                );
+                    final File? image =
+                        await _imageService.pickImageFromCamera();
+
+                    if (!mounted || image == null) return;
+
+                    navigator.push(
+                      MaterialPageRoute(
+                        builder: (_) => PreviewPage(imageFile: image),
+                      ),
+                    );
+                  } finally {
+                    _isPickingImage = false;
+                  }
                 },
                 icon: const Icon(Icons.camera_alt),
                 label: const Text("Ambil dari Kamera"),

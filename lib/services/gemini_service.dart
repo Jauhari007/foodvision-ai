@@ -1,50 +1,65 @@
 import 'dart:convert';
+import 'dart:io';
+
 import 'package:google_generative_ai/google_generative_ai.dart';
+
+import '../core/errors/app_exception.dart';
 import '../models/nutrition_model.dart';
 
 class GeminiService {
-  static const String _apiKey = String.fromEnvironment('GEMINI_API_KEY');
+  static const String _envApiKey = String.fromEnvironment('GEMINI_API_KEY');
+  // Jangan hardcode API key di sini — gunakan --dart-define=GEMINI_API_KEY=xxx
+  static const String _fallbackApiKey = '';
+
+  // gemini-flash-latest — dikonfirmasi tersedia untuk API key ini
+  static const String _modelName = 'gemini-flash-latest';
+  static const Duration _timeout = Duration(seconds: 20);
+
+  String get _apiKey => _envApiKey.isNotEmpty ? _envApiKey : _fallbackApiKey;
 
   GenerativeModel? _model;
 
   GeminiService() {
-    if (_apiKey.isNotEmpty) {
+    final key = _apiKey;
+    if (key.isNotEmpty) {
       _model = GenerativeModel(
-        model: 'gemini-1.5-flash',
-        apiKey: _apiKey,
-        generationConfig: GenerationConfig(responseMimeType: 'application/json'),
+        model: _modelName,
+        apiKey: key,
       );
     }
   }
 
-  /// Estimates the nutrition facts of a food name using Gemini API.
+  /// Mengestimasi informasi nutrisi makanan menggunakan Gemini API.
+  /// Melempar [AppException.geminiFailed] atau [AppException.noInternet] jika gagal.
   Future<NutritionModel> getNutritionEstimate(String foodName) async {
     if (_apiKey.isEmpty) {
-      throw Exception(
-        'API Key Gemini belum disetel. Silakan jalankan aplikasi menggunakan '
-        'flag --dart-define=GEMINI_API_KEY=KUNCI_ANDA untuk mengaktifkan fitur ini.'
+      throw AppException.geminiFailed(
+        'API Key tidak disetel. Gunakan --dart-define=GEMINI_API_KEY=KUNCI_ANDA',
       );
     }
 
     if (_model == null) {
-      throw Exception('Model Gemini gagal diinisialisasi.');
+      throw AppException.geminiFailed('Model Gemini gagal diinisialisasi.');
     }
 
-    final prompt = 'Berikan estimasi informasi nutrisi untuk 1 porsi makanan berikut: "$foodName". '
+    final prompt =
+        'Berikan estimasi informasi nutrisi untuk 1 porsi makanan berikut: "$foodName". '
         'Hasil kembalian HARUS berupa objek JSON valid dengan struktur: '
         '{"calories": "X kcal", "protein": "Y g", "fat": "Z g", "carbohydrate": "A g", "fiber": "B g"}. '
         'Kembalikan HANYA JSON tersebut tanpa teks pembuka atau penutup markdown.';
 
     try {
       final content = [Content.text(prompt)];
-      final response = await _model!.generateContent(content);
+      final response = await _model!
+          .generateContent(content)
+          .timeout(_timeout);
 
       final responseText = response.text;
       if (responseText == null || responseText.isEmpty) {
-        throw Exception('Tidak mendapatkan respon dari Gemini.');
+        throw AppException.geminiFailed('Tidak mendapatkan respons dari Gemini.');
       }
 
-      // Sanitize the response content just in case the model returns markdown code block
+      // Sanitize: hapus markdown code block jika ada
       String cleanJson = responseText.trim();
       if (cleanJson.startsWith('```')) {
         cleanJson = cleanJson.replaceAll(RegExp(r'^```json\s*|```$'), '').trim();
@@ -52,8 +67,19 @@ class GeminiService {
 
       final Map<String, dynamic> jsonMap = json.decode(cleanJson);
       return NutritionModel.fromJson(jsonMap);
-    } catch (e) {
-      throw Exception('Gagal mendapatkan estimasi nutrisi dari Gemini: $e');
+    } on AppException {
+      rethrow;
+    } on SocketException {
+      throw AppException.noInternet();
+    } on Exception catch (e) {
+      final msg = e.toString();
+      if (msg.contains('TimeoutException')) {
+        throw AppException.timeout('Gemini');
+      }
+      if (msg.contains('SocketException') || msg.contains('network')) {
+        throw AppException.noInternet();
+      }
+      throw AppException.geminiFailed(msg);
     }
   }
 }

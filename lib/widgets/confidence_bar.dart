@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_sizes.dart';
 
 class ConfidenceBar extends StatelessWidget {
   final double confidence;
@@ -10,6 +12,12 @@ class ConfidenceBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final progressColor = confidence >= 0.75
+        ? AppColors.primary
+        : confidence >= 0.50
+            ? AppColors.orange
+            : AppColors.error;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -17,16 +25,10 @@ class ConfidenceBar extends StatelessWidget {
           value: confidence,
           minHeight: 10,
           borderRadius: BorderRadius.circular(10),
-          backgroundColor: Colors.grey.shade300,
-          valueColor: AlwaysStoppedAnimation(
-            confidence >= 0.75
-                ? Colors.green
-                : confidence >= 0.50
-                    ? Colors.orange
-                    : Colors.red,
-          ),
+          backgroundColor: AppColors.borderGray,
+          valueColor: AlwaysStoppedAnimation(progressColor),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: AppSizes.p8),
         Text(
           "${(confidence * 100).toStringAsFixed(2)}%",
           style: const TextStyle(

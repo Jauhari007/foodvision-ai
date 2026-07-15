@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import '../core/errors/app_exception.dart';
 import '../models/meal_model.dart';
 import '../repository/meal_repository.dart';
 
@@ -9,20 +11,23 @@ class PredictionProvider extends ChangeNotifier {
 
   List<Meal> _meals = [];
   MealFetchStatus _status = MealFetchStatus.idle;
-  String? _errorMessage;
+  AppException? _error;
 
   List<Meal> get meals => _meals;
   MealFetchStatus get status => _status;
-  String? get errorMessage => _errorMessage;
+  AppException? get error => _error;
 
   bool get isLoading => _status == MealFetchStatus.loading;
   bool get isSuccess => _status == MealFetchStatus.success;
   bool get isError => _status == MealFetchStatus.error;
 
-  /// Fetches recipes matching the given food name and notifies listeners of state updates.
+  /// Pesan error yang dapat ditampilkan ke user.
+  String? get errorMessage => _error?.userMessage;
+
+  /// Mengambil daftar resep yang cocok dengan nama makanan.
   Future<void> fetchRecipesForFood(String foodName) async {
     _status = MealFetchStatus.loading;
-    _errorMessage = null;
+    _error = null;
     _meals = [];
     notifyListeners();
 
@@ -30,19 +35,22 @@ class PredictionProvider extends ChangeNotifier {
       final results = await _mealRepository.searchMeals(foodName);
       _meals = results;
       _status = MealFetchStatus.success;
+    } on AppException catch (e) {
+      _error = e;
+      _status = MealFetchStatus.error;
     } catch (e) {
-      _errorMessage = e.toString();
+      _error = AppException.unknown(e.toString());
       _status = MealFetchStatus.error;
     } finally {
       notifyListeners();
     }
   }
 
-  /// Resets the provider state.
+  /// Mereset state provider.
   void clear() {
     _meals = [];
     _status = MealFetchStatus.idle;
-    _errorMessage = null;
+    _error = null;
     notifyListeners();
   }
 }

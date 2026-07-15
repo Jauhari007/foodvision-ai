@@ -1,0 +1,31 @@
+class AppStrings {
+  static const String appName = 'FoodVision AI';
+  static const String analyzing = 'Menganalisis gambar...';
+  static const String backgroundProcess = 'Proses inferensi berjalan di background';
+  static const String inferenceFailed = 'Inferensi gagal:';
+  static const String selectGallery = 'Pilih dari Galeri';
+  static const String takePhoto = 'Ambil dari Kamera';
+  static const String unrecognizedTitle = 'Makanan Tidak Dapat Dikenali';
+  static const String unrecognizedDesc = 'Model tidak yakin bahwa gambar ini adalah makanan. Silakan gunakan foto makanan yang lebih jelas.';
+  static const String confidenceTitle = 'Tingkat Kepercayaan (Confidence)';
+  static const String scanAgain = 'Scan Lagi';
+  static const String mainResultTitle = 'Hasil Prediksi Utama';
+  static const String top5PredictionsTitle = 'Top 5 Analisis Prediksi';
+  static const String geminiNutritionTitle = 'Estimasi Nilai Gizi (Gemini AI)';
+  static const String recipeDetailTitle = 'Detail Resep Makanan';
+  static const String energyLabel = 'Energi:';
+  static const String proteinLabel = 'Protein';
+  static const String carbsLabel = 'Karbohidrat';
+  static const String fatLabel = 'Lemak';
+  static const String fiberLabel = 'Serat';
+  static const String servingNotice = '*Nilai di atas merupakan estimasi per 1 porsi saji.';
+  static const String recipeLoading = 'Mencari informasi resep di MealDB...';
+  static const String recipeNotFound = 'Resep Tidak Ditemukan';
+  static const String recipeNotFoundDesc = "Maaf, kami tidak berhasil menemukan resep pencocokan untuk '{label}' di basis data MealDB.";
+  static const String nutritionLoading = 'Mengestimasi informasi nutrisi via Gemini...';
+  static const String nutritionErrorTitle = 'Estimasi Nutrisi Tertunda';
+  static const String nutritionErrorApiKey = 'Kunci API Gemini tidak ditemukan. Jalankan dengan flag --dart-define=GEMINI_API_KEY=KUNCI_ANDA';
+  static const String connectionFailed = 'Koneksi Gagal';
+  static const String retryLabel = 'Coba Lagi';
+  static const String scanAnotherQuery = 'Ingin memindai makanan lain?';
+}

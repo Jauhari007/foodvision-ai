@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../services/ml/tflite_service.dart';
-import '../../../../providers/prediction_provider.dart';
-import '../../../../models/meal_model.dart';
+import '../models/prediction_model.dart';
+import '../providers/prediction_provider.dart';
+import '../models/meal_model.dart';
+import '../core/constants/app_colors.dart';
+import '../core/constants/app_sizes.dart';
+import '../core/constants/constants.dart';
 
 class TopPredictionsList extends StatelessWidget {
   final List<Prediction> predictions;
@@ -25,28 +28,31 @@ class TopPredictionsList extends StatelessWidget {
           children: [
             const Icon(
               Icons.analytics_outlined,
-              color: Colors.green,
-              size: 20,
+              color: AppColors.primary,
+              size: AppSizes.iconMedium,
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: AppSizes.p8),
             Text(
-              "Top 5 Analisis Prediksi",
+              AppStrings.top5PredictionsTitle,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: AppColors.textDark,
                   ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: AppSizes.p12),
         Card(
           elevation: 2,
           shadowColor: Colors.black12,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(AppSizes.r16),
           ),
           child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSizes.p8,
+              horizontal: AppSizes.p4,
+            ),
             child: ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -62,35 +68,35 @@ class TopPredictionsList extends StatelessWidget {
 
                 // Color coding based on confidence levels
                 final Color progressColor = prediction.confidence >= 0.75
-                    ? Colors.green
+                    ? AppColors.primary
                     : prediction.confidence >= 0.50
-                        ? Colors.orange
-                        : Colors.red;
+                        ? AppColors.orange
+                        : AppColors.error;
 
                 return InkWell(
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(AppSizes.r8),
                   onTap: () => _showRecipeSheet(context, prediction.label),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: AppSizes.p16,
+                      vertical: AppSizes.p12,
                     ),
                     child: Row(
                       children: [
                         // Rank Indicator
                         CircleAvatar(
                           radius: 14,
-                          backgroundColor: Colors.green.withAlpha((0.1 * 255).round()),
+                          backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
                           child: Text(
                             "${index + 1}",
                             style: const TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green,
+                              color: AppColors.primary,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: AppSizes.p12),
 
                         // Food Name & Confidence Bar
                         Expanded(
@@ -102,26 +108,26 @@ class TopPredictionsList extends StatelessWidget {
                                 style: const TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
+                                  color: AppColors.textDark,
                                 ),
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: AppSizes.p6),
                               Row(
                                 children: [
                                   Expanded(
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
+                                      borderRadius: BorderRadius.circular(AppSizes.r4),
                                       child: LinearProgressIndicator(
                                         value: prediction.confidence,
                                         minHeight: 6,
-                                        backgroundColor: Colors.grey.shade200,
+                                        backgroundColor: AppColors.progressBackground,
                                         valueColor: AlwaysStoppedAnimation(
                                           progressColor,
                                         ),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: AppSizes.p12),
                                   Text(
                                     "${confidencePercent.toStringAsFixed(1)}%",
                                     style: TextStyle(
@@ -135,14 +141,14 @@ class TopPredictionsList extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: AppSizes.p8),
 
                         // Action Icon (MealDB Preparation)
                         IconButton(
                           icon: const Icon(
                             Icons.menu_book,
-                            color: Colors.green,
-                            size: 20,
+                            color: AppColors.primary,
+                            size: AppSizes.iconMedium,
                           ),
                           tooltip: "Lihat Resep",
                           onPressed: () =>
@@ -174,7 +180,7 @@ class TopPredictionsList extends StatelessWidget {
         return Consumer<PredictionProvider>(
           builder: (context, prov, child) {
             return Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(AppSizes.p20),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +190,7 @@ class TopPredictionsList extends StatelessWidget {
                       width: 40,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: AppColors.borderGray,
                         borderRadius: BorderRadius.circular(10),
                       ),
                     ),
@@ -194,9 +200,9 @@ class TopPredictionsList extends StatelessWidget {
                     children: [
                       const Icon(
                         Icons.restaurant,
-                        color: Colors.green,
+                        color: AppColors.primary,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: AppSizes.p8),
                       Expanded(
                         child: Text(
                           "Resep MealDB: $foodName",
@@ -214,7 +220,7 @@ class TopPredictionsList extends StatelessWidget {
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 30),
                         child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(Colors.green),
+                          valueColor: AlwaysStoppedAnimation(AppColors.primary),
                         ),
                       ),
                     )
@@ -224,7 +230,7 @@ class TopPredictionsList extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Text(
                           "Gagal mengambil resep: ${prov.errorMessage}",
-                          style: const TextStyle(color: Colors.red),
+                          style: const TextStyle(color: AppColors.error),
                         ),
                       ),
                     )
@@ -234,7 +240,7 @@ class TopPredictionsList extends StatelessWidget {
                         padding: EdgeInsets.symmetric(vertical: 30),
                         child: Text(
                           "Tidak ada resep ditemukan di MealDB.",
-                          style: TextStyle(color: Colors.grey),
+                          style: TextStyle(color: AppColors.textMuted),
                         ),
                       ),
                     )
@@ -273,7 +279,7 @@ class TopPredictionsList extends StatelessWidget {
                               ),
                               trailing: const Icon(
                                 Icons.chevron_right,
-                                color: Colors.green,
+                                color: AppColors.primary,
                               ),
                               onTap: () {
                                 Navigator.pop(context);

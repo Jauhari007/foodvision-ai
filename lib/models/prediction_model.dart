@@ -1,11 +1,19 @@
-class PredictionResult {
+class Prediction {
   final String label;
   final double confidence;
 
-  PredictionResult({
+  Prediction({
     required this.label,
     required this.confidence,
   });
+}
 
-  double get confidencePercentage => confidence * 100;
+class InferenceResult {
+  final Prediction topPrediction;
+  final List<Prediction> top5Predictions;
+
+  InferenceResult({
+    required this.topPrediction,
+    required this.top5Predictions,
+  });
 }

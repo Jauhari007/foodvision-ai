@@ -6,7 +6,9 @@ import 'package:flutter_spinkit/flutter_spinkit.dart';
 import '../../services/ml/tflite_service.dart';
 import '../../widgets/confidence_bar.dart';
 import '../../models/meal_model.dart';
+import '../../models/nutrition_model.dart';
 import '../../repository/meal_repository.dart';
+import '../../services/gemini_service.dart';
 import 'widgets/top_predictions_list.dart';
 
 class PreviewPage extends StatefulWidget {
@@ -27,21 +29,35 @@ class PreviewPage extends StatefulWidget {
 
 class _PreviewPageState extends State<PreviewPage> {
   final MealRepository _mealRepository = MealRepository();
+  final GeminiService _geminiService = GeminiService();
+
   late Future<Meal?> _recipeFuture;
+  late Future<NutritionModel> _nutritionFuture;
 
   @override
   void initState() {
     super.initState();
     _loadRecipe();
+    _loadNutrition();
   }
 
   void _loadRecipe() {
     _recipeFuture = _mealRepository.getMealDetailByFoodName(widget.prediction.label);
   }
 
+  void _loadNutrition() {
+    _nutritionFuture = _geminiService.getNutritionEstimate(widget.prediction.label);
+  }
+
   void _retryLoadRecipe() {
     setState(() {
       _loadRecipe();
+    });
+  }
+
+  void _retryLoadNutrition() {
+    setState(() {
+      _loadNutrition();
     });
   }
 
@@ -145,7 +161,30 @@ class _PreviewPageState extends State<PreviewPage> {
                 const SizedBox(height: 20),
               ],
 
-              // 4. MealDB Recipe Details Section (FutureBuilder)
+              // 4. Gemini Nutrition Facts Card (FutureBuilder)
+              FutureBuilder<NutritionModel>(
+                future: _nutritionFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return _buildNutritionLoadingState();
+                  }
+
+                  if (snapshot.hasError) {
+                    return _buildNutritionErrorState(snapshot.error.toString());
+                  }
+
+                  final nutrition = snapshot.data;
+                  if (nutrition == null) {
+                    return const SizedBox.shrink();
+                  }
+
+                  return _buildNutritionSuccessState(nutrition);
+                },
+              ),
+
+              const SizedBox(height: 20),
+
+              // 5. MealDB Recipe Details Section (FutureBuilder)
               FutureBuilder<Meal?>(
                 future: _recipeFuture,
                 builder: (context, snapshot) {
@@ -168,7 +207,7 @@ class _PreviewPageState extends State<PreviewPage> {
 
               const SizedBox(height: 20),
 
-              // 5. Scan Again Action Card
+              // 6. Scan Again Action Card
               Card(
                 elevation: 2,
                 shadowColor: Colors.black12,
@@ -224,7 +263,271 @@ class _PreviewPageState extends State<PreviewPage> {
     );
   }
 
-  // --- Recipe UI State Builders ---
+  // --- Gemini Nutrition UI State Builders ---
+
+  Widget _buildNutritionLoadingState() {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: Column(
+          children: [
+            SpinKitThreeBounce(
+              color: Colors.green,
+              size: 24,
+            ),
+            SizedBox(height: 12),
+            Text(
+              "Mengestimasi informasi nutrisi via Gemini...",
+              style: TextStyle(
+                color: Colors.black54,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutritionErrorState(String error) {
+    return Card(
+      elevation: 2,
+      shadowColor: Colors.black12,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          children: [
+            const Icon(
+              Icons.warning_amber_rounded,
+              color: Colors.orangeAccent,
+              size: 36,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Estimasi Nutrisi Tertunda",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 15,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              error.contains('API Key')
+                  ? 'Kunci API Gemini tidak ditemukan. Jalankan dengan flag --dart-define=GEMINI_API_KEY=KUNCI_ANDA'
+                  : error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black54,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              height: 32,
+              child: ElevatedButton.icon(
+                onPressed: _retryLoadNutrition,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                icon: const Icon(Icons.refresh, size: 14),
+                label: const Text("Coba Lagi", style: TextStyle(fontSize: 12)),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNutritionSuccessState(NutritionModel nutrition) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(
+              Icons.health_and_safety_outlined,
+              color: Colors.green,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              "Estimasi Nilai Gizi (Gemini AI)",
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Card(
+          elevation: 2,
+          shadowColor: Colors.black12,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Highlighted Calories
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withAlpha((0.08 * 255).round()),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.local_fire_department, color: Colors.orange, size: 24),
+                      const SizedBox(width: 8),
+                      const Text(
+                        "Energi:",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        nutrition.calories,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.orange,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // 2x2 Grid of other nutrients
+                Row(
+                  children: [
+                    // Protein
+                    Expanded(
+                      child: _buildNutrientMiniCard(
+                        title: "Protein",
+                        value: nutrition.protein,
+                        icon: Icons.fitness_center,
+                        color: Colors.blue,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Carbs
+                    Expanded(
+                      child: _buildNutrientMiniCard(
+                        title: "Karbohidrat",
+                        value: nutrition.carbohydrate,
+                        icon: Icons.grain,
+                        color: Colors.purple,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    // Fat
+                    Expanded(
+                      child: _buildNutrientMiniCard(
+                        title: "Lemak",
+                        value: nutrition.fat,
+                        icon: Icons.opacity,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Fiber
+                    Expanded(
+                      child: _buildNutrientMiniCard(
+                        title: "Serat",
+                        value: nutrition.fiber,
+                        icon: Icons.spa,
+                        color: Colors.teal,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  "*Nilai di atas merupakan estimasi per 1 porsi saji.",
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontStyle: FontStyle.italic,
+                    color: Colors.grey,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNutrientMiniCard({
+    required String title,
+    required String value,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      decoration: BoxDecoration(
+        color: color.withAlpha((0.06 * 255).round()),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withAlpha((0.15 * 255).round()),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: color, size: 16),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Colors.black87,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- MealDB Recipe UI State Builders ---
 
   Widget _buildRecipeLoadingState() {
     return Card(

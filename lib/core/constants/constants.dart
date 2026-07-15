@@ -1,5 +1,5 @@
 class AppStrings {
-  static const String appName = 'FoodVision AI';
+  static const String appName = 'FoodVisionAI';
   static const String analyzing = 'Menganalisis gambar...';
   static const String backgroundProcess = 'Proses inferensi berjalan di background';
   static const String inferenceFailed = 'Inferensi gagal:';

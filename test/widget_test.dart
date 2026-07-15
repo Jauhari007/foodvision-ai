@@ -5,6 +5,6 @@ void main() {
   testWidgets('App loads successfully', (WidgetTester tester) async {
     await tester.pumpWidget(const FoodVisionAI());
 
-    expect(find.text('FoodVision AI'), findsOneWidget);
+    expect(find.text('FoodVision AI'), findsNWidgets(2));
   });
 }

@@ -96,14 +96,28 @@ class _HomePageState extends State<HomePage> {
                   try {
                     final navigator = Navigator.of(context);
 
-                    final File? image =
-                        await _imageService.pickImageFromGallery();
+                    final File? image = await _imageService.pickImageFromGallery();
 
                     if (!mounted || image == null) return;
 
+                    final result = await _tfliteService.inferImage(image);
+
+                    debugPrint("Infer selesai");
+
+                    final prediction = _tfliteService.getTopPrediction(result);
+                    final topPredictions = _tfliteService.getTop5Predictions(result);
+
+                    debugPrint("Prediction selesai");
+                    debugPrint("HASIL : ${prediction.label}");
+                    debugPrint("CONFIDENCE : ${(prediction.confidence * 100).toStringAsFixed(2)}%");
+
                     navigator.push(
                       MaterialPageRoute(
-                        builder: (_) => PreviewPage(imageFile: image),
+                        builder: (_) => PreviewPage(
+                          imageFile: image,
+                          prediction: prediction,
+                          topPredictions: topPredictions,
+                        ),
                       ),
                     );
                   } finally {
@@ -114,7 +128,6 @@ class _HomePageState extends State<HomePage> {
                 label: const Text("Pilih dari Galeri"),
               ),
             ),
-
             const SizedBox(height: 16),
 
             SizedBox(
@@ -126,22 +139,35 @@ class _HomePageState extends State<HomePage> {
 
                   _isPickingImage = true;
 
-                  try {
-                    final navigator = Navigator.of(context);
+                try {
+                  final navigator = Navigator.of(context);
 
-                    final File? image =
-                        await _imageService.pickImageFromCamera();
+                  final File? image = await _imageService.pickImageFromCamera();
 
-                    if (!mounted || image == null) return;
+                  if (!mounted || image == null) return;
 
-                    navigator.push(
-                      MaterialPageRoute(
-                        builder: (_) => PreviewPage(imageFile: image),
+                  final result = await _tfliteService.inferImage(image);
+
+                  final prediction = _tfliteService.getTopPrediction(result);
+                  final topPredictions = _tfliteService.getTop5Predictions(result);
+
+                  debugPrint("HASIL : ${prediction.label}");
+                  debugPrint(
+                    "CONFIDENCE : ${(prediction.confidence * 100).toStringAsFixed(2)}%",
+                  );
+
+                  navigator.push(
+                    MaterialPageRoute(
+                      builder: (_) => PreviewPage(
+                        imageFile: image,
+                        prediction: prediction,
+                        topPredictions: topPredictions,
                       ),
-                    );
-                  } finally {
-                    _isPickingImage = false;
-                  }
+                    ),
+                  );
+                } finally {
+                  _isPickingImage = false;
+                }
                 },
                 icon: const Icon(Icons.camera_alt),
                 label: const Text("Ambil dari Kamera"),

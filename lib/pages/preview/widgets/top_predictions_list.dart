@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../services/ml/tflite_service.dart';
 import '../../../../providers/prediction_provider.dart';
+import '../../../../models/meal_model.dart';
 
 class TopPredictionsList extends StatelessWidget {
   final List<Prediction> predictions;
@@ -292,7 +293,7 @@ class TopPredictionsList extends StatelessWidget {
     );
   }
 
-  void _showRecipeDetailDialog(BuildContext context, meal) {
+  void _showRecipeDetailDialog(BuildContext context, Meal meal) {
     showDialog(
       context: context,
       builder: (context) {

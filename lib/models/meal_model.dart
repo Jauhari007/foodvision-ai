@@ -6,6 +6,7 @@ class Meal {
   final String? instructions;
   final String? thumbnailUrl;
   final String? youtubeUrl;
+  final List<String> tags;
   final List<String> ingredients;
   final List<String> measures;
 
@@ -17,6 +18,7 @@ class Meal {
     this.instructions,
     this.thumbnailUrl,
     this.youtubeUrl,
+    this.tags = const [],
     this.ingredients = const [],
     this.measures = const [],
   });
@@ -28,13 +30,19 @@ class Meal {
 
     for (int i = 1; i <= 20; i++) {
       final ingredient = json['strIngredient$i'] as String?;
-      final measure = json['strMeasure$i'] as String?;
+      final X = json['strMeasure$i'] as String?;
 
       if (ingredient != null && ingredient.trim().isNotEmpty) {
         ingredientsList.add(ingredient.trim());
-        measuresList.add(measure?.trim() ?? '');
+        measuresList.add(X?.trim() ?? '');
       }
     }
+
+    // Extract tags
+    final tagsString = json['strTags'] as String?;
+    final tagsList = tagsString != null && tagsString.trim().isNotEmpty
+        ? tagsString.split(',').map((t) => t.trim()).where((t) => t.isNotEmpty).toList()
+        : <String>[];
 
     return Meal(
       id: json['idMeal'] ?? '',
@@ -44,6 +52,7 @@ class Meal {
       instructions: json['strInstructions'],
       thumbnailUrl: json['strMealThumb'],
       youtubeUrl: json['strYoutube'],
+      tags: tagsList,
       ingredients: ingredientsList,
       measures: measuresList,
     );
@@ -58,6 +67,7 @@ class Meal {
       'strInstructions': instructions,
       'strMealThumb': thumbnailUrl,
       'strYoutube': youtubeUrl,
+      'strTags': tags.join(','),
     };
 
     for (int i = 0; i < ingredients.length; i++) {

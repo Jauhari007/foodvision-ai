@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/meal_model.dart';
-import '../services/mealdb_service.dart';
+import '../repository/meal_repository.dart';
 
 enum MealFetchStatus { idle, loading, success, error }
 
 class PredictionProvider extends ChangeNotifier {
-  final MealDbService _mealDbService = MealDbService();
+  final MealRepository _mealRepository = MealRepository();
 
   List<Meal> _meals = [];
   MealFetchStatus _status = MealFetchStatus.idle;
@@ -27,7 +27,7 @@ class PredictionProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final results = await _mealDbService.searchMeals(foodName);
+      final results = await _mealRepository.searchMeals(foodName);
       _meals = results;
       _status = MealFetchStatus.success;
     } catch (e) {

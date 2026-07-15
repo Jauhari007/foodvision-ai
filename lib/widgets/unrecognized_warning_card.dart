@@ -15,6 +15,8 @@ class UnrecognizedWarningCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final confidencePercent = (confidence * 100).toStringAsFixed(2);
+    final isTablet = AppSizes.isTablet(context);
+
     return Card(
       elevation: 2,
       shadowColor: Colors.black12,
@@ -22,41 +24,46 @@ class UnrecognizedWarningCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSizes.r16),
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          vertical: AppSizes.p32,
-          horizontal: AppSizes.p24,
+        padding: EdgeInsets.symmetric(
+          vertical: isTablet ? AppSizes.p32 : AppSizes.p24,
+          horizontal: isTablet ? AppSizes.p32 : AppSizes.p20,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.no_food,
               color: AppColors.redAccent,
-              size: AppSizes.iconHuge,
+              // Icon lebih kecil di layar sempit
+              size: isTablet ? AppSizes.iconHuge : 60.0,
             ),
-            const SizedBox(height: AppSizes.p20),
+            const SizedBox(height: AppSizes.p16),
             const Text(
               AppStrings.unrecognizedTitle,
               textAlign: TextAlign.center,
               style: AppTextStyles.warningTitle,
             ),
-            const SizedBox(height: AppSizes.p12),
+            const SizedBox(height: AppSizes.p10),
             Text(
               AppStrings.unrecognizedDesc,
               textAlign: TextAlign.center,
               style: AppTextStyles.warningDescription,
             ),
-            const SizedBox(height: AppSizes.p28),
-            const Divider(height: 1),
             const SizedBox(height: AppSizes.p20),
+            const Divider(height: 1),
+            const SizedBox(height: AppSizes.p16),
             const Text(
               AppStrings.confidenceTitle,
               style: AppTextStyles.labelMuted,
             ),
             const SizedBox(height: AppSizes.p8),
-            Text(
-              "$confidencePercent%",
-              style: AppTextStyles.confidenceBig,
+            // FittedBox mencegah overflow teks besar di layar kecil
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                "$confidencePercent%",
+                style: AppTextStyles.confidenceBig,
+              ),
             ),
             const SizedBox(height: AppSizes.p8),
             ClipRRect(
@@ -64,7 +71,8 @@ class UnrecognizedWarningCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: confidence,
                 backgroundColor: AppColors.progressBackground,
-                valueColor: const AlwaysStoppedAnimation<Color>(AppColors.redAccent),
+                valueColor:
+                    const AlwaysStoppedAnimation<Color>(AppColors.redAccent),
                 minHeight: 8,
               ),
             ),

@@ -17,9 +17,7 @@ class TopPredictionsList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (predictions.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (predictions.isEmpty) return const SizedBox.shrink();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -32,12 +30,15 @@ class TopPredictionsList extends StatelessWidget {
               size: AppSizes.iconMedium,
             ),
             const SizedBox(width: AppSizes.p8),
-            Text(
-              AppStrings.top5PredictionsTitle,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textDark,
-                  ),
+            Expanded(
+              child: Text(
+                AppStrings.top5PredictionsTitle,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textDark,
+                    ),
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
           ],
         ),
@@ -66,7 +67,6 @@ class TopPredictionsList extends StatelessWidget {
                 final prediction = predictions[index];
                 final confidencePercent = prediction.confidence * 100;
 
-                // Color coding based on confidence levels
                 final Color progressColor = prediction.confidence >= 0.75
                     ? AppColors.primary
                     : prediction.confidence >= 0.50
@@ -78,25 +78,26 @@ class TopPredictionsList extends StatelessWidget {
                   onTap: () => _showRecipeSheet(context, prediction.label),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: AppSizes.p16,
-                      vertical: AppSizes.p12,
+                      horizontal: AppSizes.p12,
+                      vertical: AppSizes.p10,
                     ),
                     child: Row(
                       children: [
                         // Rank Indicator
                         CircleAvatar(
-                          radius: 14,
-                          backgroundColor: AppColors.primary.withAlpha((0.1 * 255).round()),
+                          radius: 13,
+                          backgroundColor:
+                              AppColors.primary.withAlpha((0.1 * 255).round()),
                           child: Text(
                             "${index + 1}",
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
                           ),
                         ),
-                        const SizedBox(width: AppSizes.p12),
+                        const SizedBox(width: AppSizes.p10),
 
                         // Food Name & Confidence Bar
                         Expanded(
@@ -106,32 +107,36 @@ class TopPredictionsList extends StatelessWidget {
                               Text(
                                 prediction.label,
                                 style: const TextStyle(
-                                  fontSize: 16,
+                                  fontSize: 14,
                                   fontWeight: FontWeight.w600,
                                   color: AppColors.textDark,
                                 ),
+                                // Mencegah overflow nama makanan panjang
+                                overflow: TextOverflow.ellipsis,
+                                maxLines: 1,
                               ),
-                              const SizedBox(height: AppSizes.p6),
+                              const SizedBox(height: AppSizes.p4),
                               Row(
                                 children: [
                                   Expanded(
                                     child: ClipRRect(
-                                      borderRadius: BorderRadius.circular(AppSizes.r4),
+                                      borderRadius:
+                                          BorderRadius.circular(AppSizes.r4),
                                       child: LinearProgressIndicator(
                                         value: prediction.confidence,
-                                        minHeight: 6,
-                                        backgroundColor: AppColors.progressBackground,
+                                        minHeight: 5,
+                                        backgroundColor:
+                                            AppColors.progressBackground,
                                         valueColor: AlwaysStoppedAnimation(
-                                          progressColor,
-                                        ),
+                                            progressColor),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: AppSizes.p12),
+                                  const SizedBox(width: AppSizes.p8),
                                   Text(
                                     "${confidencePercent.toStringAsFixed(1)}%",
                                     style: TextStyle(
-                                      fontSize: 13,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
                                       color: progressColor,
                                     ),
@@ -141,9 +146,8 @@ class TopPredictionsList extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: AppSizes.p8),
-
-                        // Action Icon (MealDB Preparation)
+                        const SizedBox(width: AppSizes.p4),
+                        // Tombol resep
                         IconButton(
                           icon: const Icon(
                             Icons.menu_book,
@@ -153,6 +157,11 @@ class TopPredictionsList extends StatelessWidget {
                           tooltip: "Lihat Resep",
                           onPressed: () =>
                               _showRecipeSheet(context, prediction.label),
+                          constraints: const BoxConstraints(
+                            minWidth: 36,
+                            minHeight: 36,
+                          ),
+                          padding: EdgeInsets.zero,
                         ),
                       ],
                     ),
@@ -166,134 +175,184 @@ class TopPredictionsList extends StatelessWidget {
     );
   }
 
+  /// Bottom sheet resep dengan DraggableScrollableSheet agar bisa di-expand/collapse
   void _showRecipeSheet(BuildContext context, String foodName) {
-    // Start fetching recipes immediately
     final provider = Provider.of<PredictionProvider>(context, listen: false);
     provider.fetchRecipesForFood(foodName);
 
     showModalBottomSheet(
       context: context,
+      // isScrollControlled + DraggableScrollableSheet → tidak overflow keyboard
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (context) {
-        return Consumer<PredictionProvider>(
-          builder: (context, prov, child) {
-            return Padding(
-              padding: const EdgeInsets.all(AppSizes.p20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 5,
-                      decoration: BoxDecoration(
-                        color: AppColors.borderGray,
-                        borderRadius: BorderRadius.circular(10),
+        return DraggableScrollableSheet(
+          initialChildSize: 0.55,
+          minChildSize: 0.35,
+          maxChildSize: 0.92,
+          expand: false,
+          builder: (context, scrollController) {
+            return Consumer<PredictionProvider>(
+              builder: (context, prov, _) {
+                return Column(
+                  children: [
+                    // Handle bar
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: AppSizes.p12),
+                      child: Container(
+                        width: 40,
+                        height: 5,
+                        decoration: BoxDecoration(
+                          color: AppColors.borderGray,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.restaurant,
-                        color: AppColors.primary,
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppSizes.p20,
                       ),
-                      const SizedBox(width: AppSizes.p8),
-                      Expanded(
-                        child: Text(
-                          "Resep MealDB: $foodName",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  if (prov.isLoading)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation(AppColors.primary),
-                        ),
-                      ),
-                    )
-                  else if (prov.isError)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
-                        child: Text(
-                          "Gagal mengambil resep: ${prov.errorMessage}",
-                          style: const TextStyle(color: AppColors.error),
-                        ),
-                      ),
-                    )
-                  else if (prov.meals.isEmpty)
-                    const Center(
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 30),
-                        child: Text(
-                          "Tidak ada resep ditemukan di MealDB.",
-                          style: TextStyle(color: AppColors.textMuted),
-                        ),
-                      ),
-                    )
-                  else
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: prov.meals.length,
-                        itemBuilder: (context, index) {
-                          final meal = prov.meals[index];
-                          return Card(
-                            elevation: 1,
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            child: ListTile(
-                              leading: meal.thumbnailUrl != null
-                                  ? ClipRRect(
-                                      borderRadius: BorderRadius.circular(8),
-                                      child: Image.network(
-                                        meal.thumbnailUrl!,
-                                        width: 50,
-                                        height: 50,
-                                        fit: BoxFit.cover,
-                                        errorBuilder:
-                                            (context, error, stackTrace) =>
-                                                const Icon(Icons.broken_image),
-                                      ),
-                                    )
-                                  : const Icon(Icons.restaurant),
-                              title: Text(
-                                meal.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.restaurant, color: AppColors.primary),
+                          const SizedBox(width: AppSizes.p8),
+                          Expanded(
+                            child: Text(
+                              "Resep MealDB: $foodName",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                               ),
-                              subtitle: Text(
-                                "${meal.category ?? 'Tanpa Kategori'} | ${meal.area ?? 'Asal Khas'}",
-                              ),
-                              trailing: const Icon(
-                                Icons.chevron_right,
-                                color: AppColors.primary,
-                              ),
-                              onTap: () {
-                                Navigator.pop(context);
-                                _showRecipeDetailDialog(context, meal);
-                              },
+                              overflow: TextOverflow.ellipsis,
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
                     ),
-                ],
-              ),
+                    const SizedBox(height: AppSizes.p8),
+                    const Divider(height: 1),
+                    // Konten scrollable
+                    Expanded(
+                      child: _buildSheetContent(context, prov, scrollController),
+                    ),
+                    // Padding bottom agar aman dari navbar / keyboard
+                    SizedBox(
+                        height: MediaQuery.viewInsetsOf(context).bottom +
+                            MediaQuery.paddingOf(context).bottom),
+                  ],
+                );
+              },
             );
           },
+        );
+      },
+    );
+  }
+
+  Widget _buildSheetContent(
+    BuildContext context,
+    PredictionProvider prov,
+    ScrollController scrollController,
+  ) {
+    if (prov.isLoading) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.p32),
+          child: CircularProgressIndicator(
+            valueColor: AlwaysStoppedAnimation(AppColors.primary),
+          ),
+        ),
+      );
+    }
+
+    if (prov.isError) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppSizes.p20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.cloud_off, size: 48, color: AppColors.redAccent),
+              const SizedBox(height: AppSizes.p12),
+              Text(
+                prov.errorMessage ?? 'Gagal mengambil resep.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (prov.meals.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppSizes.p32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.search_off, size: 48, color: AppColors.textMuted),
+              SizedBox(height: AppSizes.p12),
+              Text(
+                "Tidak ada resep ditemukan di MealDB.",
+                style: TextStyle(color: AppColors.textMuted),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return ListView.builder(
+      controller: scrollController,
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSizes.p16,
+        vertical: AppSizes.p8,
+      ),
+      itemCount: prov.meals.length,
+      itemBuilder: (context, index) {
+        final meal = prov.meals[index];
+        return Card(
+          elevation: 1,
+          margin: const EdgeInsets.symmetric(vertical: AppSizes.p6),
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: AppSizes.p12,
+              vertical: AppSizes.p4,
+            ),
+            leading: meal.thumbnailUrl != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(AppSizes.r8),
+                    child: Image.network(
+                      meal.thumbnailUrl!,
+                      width: 48,
+                      height: 48,
+                      fit: BoxFit.cover,
+                      errorBuilder: (ctx, err, _) =>
+                          const Icon(Icons.broken_image),
+                    ),
+                  )
+                : const Icon(Icons.restaurant),
+            title: Text(
+              meal.name,
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              "${meal.category ?? 'Tanpa Kategori'} | ${meal.area ?? 'Asal Khas'}",
+              overflow: TextOverflow.ellipsis,
+            ),
+            trailing: const Icon(Icons.chevron_right, color: AppColors.primary),
+            onTap: () {
+              Navigator.pop(context);
+              _showRecipeDetailDialog(context, meal);
+            },
+          ),
         );
       },
     );
@@ -304,44 +363,68 @@ class TopPredictionsList extends StatelessWidget {
       context: context,
       builder: (context) {
         return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+          title: Text(
+            meal.name,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 2,
           ),
-          title: Text(meal.name),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (meal.thumbnailUrl != null)
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
-                    child: Image.network(
-                      meal.thumbnailUrl!,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                if (meal.category != null || meal.area != null)
-                  Text(
-                    "Kategori: ${meal.category ?? ''} (${meal.area ?? ''})",
-                    style: const TextStyle(
-                      fontStyle: FontStyle.italic,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                const SizedBox(height: 12),
-                const Text(
-                  "Instruksi Pembuatan:",
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+          content: LayoutBuilder(
+            builder: (context, constraints) {
+              // Tinggi konten dialog dibatasi agar tidak overflow layar
+              final maxH = MediaQuery.sizeOf(context).height * 0.55;
+              return SizedBox(
+                width: constraints.maxWidth,
+                height: maxH,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      if (meal.thumbnailUrl != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(AppSizes.r12),
+                          child: Image.network(
+                            meal.thumbnailUrl!,
+                            width: double.infinity,
+                            // Tinggi thumbnail proporsional
+                            height: (MediaQuery.sizeOf(context).width * 0.5)
+                                .clamp(140.0, 220.0),
+                            fit: BoxFit.cover,
+                            errorBuilder: (ctx, err, _) => const SizedBox(),
+                          ),
+                        ),
+                      const SizedBox(height: AppSizes.p12),
+                      if (meal.category != null || meal.area != null)
+                        Text(
+                          "Kategori: ${meal.category ?? ''} (${meal.area ?? ''})",
+                          style: const TextStyle(
+                            fontStyle: FontStyle.italic,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      const SizedBox(height: AppSizes.p12),
+                      const Text(
+                        "Instruksi Pembuatan:",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: AppSizes.p6),
+                      Text(
+                        meal.instructions ?? "Tidak ada instruksi.",
+                        style: const TextStyle(height: 1.5, fontSize: 13),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Text(meal.instructions ?? "Tidak ada instruksi."),
-              ],
-            ),
+              );
+            },
           ),
           actions: [
             TextButton(

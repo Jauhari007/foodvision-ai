@@ -247,49 +247,49 @@ class _NutritionSuccessState extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSizes.p16),
                 
-                // 2x2 Grid of other nutrients
-                Row(
-                  children: [
-                    Expanded(
-                      child: NutrientMiniCard(
+                // Grid nutrisi menggunakan Wrap agar adaptif di layar sempit
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // Di layar >= 300px pakai 2 kolom, lebih kecil 1 kolom
+                    final useWrap = constraints.maxWidth >= 280;
+                    final itemWidth =
+                        useWrap ? (constraints.maxWidth - 12) / 2 : constraints.maxWidth;
+
+                    final nutrientItems = [
+                      NutrientMiniCard(
                         title: AppStrings.proteinLabel,
                         value: nutrition.protein,
                         icon: Icons.fitness_center,
                         color: AppColors.blue,
                       ),
-                    ),
-                    const SizedBox(width: AppSizes.p12),
-                    Expanded(
-                      child: NutrientMiniCard(
+                      NutrientMiniCard(
                         title: AppStrings.carbsLabel,
                         value: nutrition.carbohydrate,
                         icon: Icons.grain,
                         color: AppColors.purple,
                       ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSizes.p12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: NutrientMiniCard(
+                      NutrientMiniCard(
                         title: AppStrings.fatLabel,
                         value: nutrition.fat,
                         icon: Icons.opacity,
                         color: AppColors.error,
                       ),
-                    ),
-                    const SizedBox(width: AppSizes.p12),
-                    Expanded(
-                      child: NutrientMiniCard(
+                      NutrientMiniCard(
                         title: AppStrings.fiberLabel,
                         value: nutrition.fiber,
                         icon: Icons.spa,
                         color: AppColors.teal,
                       ),
-                    ),
-                  ],
+                    ];
+
+                    return Wrap(
+                      spacing: AppSizes.p12,
+                      runSpacing: AppSizes.p12,
+                      children: nutrientItems
+                          .map((item) => SizedBox(width: itemWidth, child: item))
+                          .toList(),
+                    );
+                  },
                 ),
                 const SizedBox(height: AppSizes.p10),
                 const Text(

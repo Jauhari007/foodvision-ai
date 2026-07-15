@@ -42,7 +42,6 @@ class _PreviewPageState extends State<PreviewPage> {
   @override
   void initState() {
     super.initState();
-    // Validate confidence: Only load recipe and nutrition if confidence >= 60% (0.60)
     if (widget.prediction.confidence >= 0.6) {
       _loadRecipe();
       _loadNutrition();
@@ -50,159 +49,194 @@ class _PreviewPageState extends State<PreviewPage> {
   }
 
   void _loadRecipe() {
-    _recipeFuture = _mealRepository.getMealDetailByFoodName(widget.prediction.label);
+    _recipeFuture =
+        _mealRepository.getMealDetailByFoodName(widget.prediction.label);
   }
 
   void _loadNutrition() {
-    _nutritionFuture = _geminiService.getNutritionEstimate(widget.prediction.label);
+    _nutritionFuture =
+        _geminiService.getNutritionEstimate(widget.prediction.label);
   }
 
-  void _retryLoadRecipe() {
-    setState(() {
-      _loadRecipe();
-    });
+  void _retryLoadRecipe() => setState(_loadRecipe);
+  void _retryLoadNutrition() => setState(_loadNutrition);
+
+  // ─── Image Widget ─────────────────────────────────────────────────────────
+
+  Widget _buildImageContainer(double height) {
+    return Container(
+      height: height,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSizes.r16),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.shadow,
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSizes.r16),
+        child: Image.file(
+          widget.imageFile,
+          width: double.infinity,
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
   }
 
-  void _retryLoadNutrition() {
-    setState(() {
-      _loadNutrition();
-    });
-  }
+  // ─── Unrecognized State ────────────────────────────────────────────────────
 
-  Widget _buildUnrecognizedFoodState() {
+  Widget _buildUnrecognizedFoodState(BuildContext context) {
+    final isLandscape = AppSizes.isLandscape(context);
+    final imgHeight = AppSizes.imageHeight(context);
+    final hPad = AppSizes.horizontalPadding(context);
+
+    final contentList = [
+      UnrecognizedWarningCard(confidence: widget.prediction.confidence),
+      const SizedBox(height: AppSizes.p16),
+      SizedBox(
+        height: AppSizes.buttonHeightLarge,
+        child: ElevatedButton.icon(
+          onPressed: () => Navigator.pop(context),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: AppColors.primary,
+            foregroundColor: AppColors.white,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppSizes.r12),
+            ),
+          ),
+          icon: const Icon(Icons.camera_alt),
+          label: const Text(
+            "Scan Lagi",
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+    ];
+
+    if (isLandscape) {
+      // Landscape: gambar kiri, konten kanan
+      return Padding(
+        padding: EdgeInsets.symmetric(horizontal: hPad, vertical: AppSizes.p16),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              flex: 4,
+              child: _buildImageContainer(imgHeight),
+            ),
+            const SizedBox(width: AppSizes.p16),
+            Expanded(
+              flex: 5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: contentList,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Portrait
     return Padding(
-      padding: const EdgeInsets.all(AppSizes.p20),
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: AppSizes.p16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 1. Captured Image Container
-          Container(
-            height: AppSizes.imageContainerHeight,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSizes.r16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.r16),
-              child: Image.file(
-                widget.imageFile,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          const SizedBox(height: AppSizes.p20),
-
-          // 2. Warning Card
-          UnrecognizedWarningCard(confidence: widget.prediction.confidence),
-          const SizedBox(height: AppSizes.p20),
-
-          // 3. Scan Lagi Button
-          SizedBox(
-            height: AppSizes.buttonHeightLarge,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                elevation: 1,
-              ),
-              icon: const Icon(Icons.camera_alt),
-              label: const Text(
-                "Scan Lagi",
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
+          _buildImageContainer(imgHeight),
+          const SizedBox(height: AppSizes.p16),
+          ...contentList,
         ],
       ),
     );
   }
 
-  Widget _buildSuccessLayout() {
-    return Padding(
-      padding: const EdgeInsets.all(AppSizes.p20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+  // ─── Success State ─────────────────────────────────────────────────────────
+
+  Widget _buildSuccessLayout(BuildContext context) {
+    final isLandscape = AppSizes.isLandscape(context);
+    final imgHeight = AppSizes.imageHeight(context);
+    final hPad = AppSizes.horizontalPadding(context);
+
+    // Daftar kartu konten (sama untuk portrait & landscape)
+    final cards = <Widget>[
+      PrimaryPredictionCard(
+        label: widget.prediction.label,
+        confidence: widget.prediction.confidence,
+      ),
+      if (widget.topPredictions.isNotEmpty) ...[
+        const SizedBox(height: AppSizes.p16),
+        TopPredictionsList(predictions: widget.topPredictions),
+      ],
+      if (_nutritionFuture != null) ...[
+        const SizedBox(height: AppSizes.p16),
+        NutritionCard(
+          nutritionFuture: _nutritionFuture,
+          onRetry: _retryLoadNutrition,
+        ),
+      ],
+      if (_recipeFuture != null) ...[
+        const SizedBox(height: AppSizes.p16),
+        RecipeCard(
+          recipeFuture: _recipeFuture,
+          foodLabel: widget.prediction.label,
+          onRetry: _retryLoadRecipe,
+        ),
+      ],
+      const SizedBox(height: AppSizes.p16),
+      ScanAgainCard(onTap: () => Navigator.pop(context)),
+    ];
+
+    if (isLandscape) {
+      // Landscape: gambar kiri pinned, konten kanan scrollable
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 1. Captured Image Container
-          Container(
-            height: AppSizes.imageContainerHeight,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(AppSizes.r16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.shadow,
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
+          // Gambar di kiri — sticky
+          Expanded(
+            flex: 4,
+            child: Padding(
+              padding: EdgeInsets.only(
+                left: hPad,
+                top: AppSizes.p16,
+                bottom: AppSizes.p16,
+              ),
+              child: _buildImageContainer(imgHeight),
             ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(AppSizes.r16),
-              child: Image.file(
-                widget.imageFile,
-                width: double.infinity,
-                fit: BoxFit.cover,
+          ),
+          const SizedBox(width: AppSizes.p12),
+          // Konten di kanan — scrollable
+          Expanded(
+            flex: 5,
+            child: Padding(
+              padding: EdgeInsets.only(
+                right: hPad,
+                top: AppSizes.p16,
+                bottom: AppSizes.p16,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: cards,
               ),
             ),
           ),
+        ],
+      );
+    }
 
-          const SizedBox(height: AppSizes.p20),
-
-          // 2. Primary TFLite Inference Results Card
-          PrimaryPredictionCard(
-            label: widget.prediction.label,
-            confidence: widget.prediction.confidence,
-          ),
-
-          const SizedBox(height: AppSizes.p20),
-
-          // 3. Top 5 Predictions Section
-          if (widget.topPredictions.isNotEmpty) ...[
-            TopPredictionsList(predictions: widget.topPredictions),
-            const SizedBox(height: AppSizes.p20),
-          ],
-
-          // 4. Gemini Nutrition Facts Card (FutureBuilder)
-          if (_nutritionFuture != null) ...[
-            NutritionCard(
-              nutritionFuture: _nutritionFuture,
-              onRetry: _retryLoadNutrition,
-            ),
-            const SizedBox(height: AppSizes.p20),
-          ],
-
-          // 5. MealDB Recipe Details Section (FutureBuilder)
-          if (_recipeFuture != null) ...[
-            RecipeCard(
-              recipeFuture: _recipeFuture,
-              foodLabel: widget.prediction.label,
-              onRetry: _retryLoadRecipe,
-            ),
-            const SizedBox(height: AppSizes.p20),
-          ],
-
-          // 6. Scan Again Action Card
-          ScanAgainCard(
-            onTap: () {
-              Navigator.pop(context);
-            },
-          ),
+    // Portrait
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: hPad, vertical: AppSizes.p16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildImageContainer(imgHeight),
+          const SizedBox(height: AppSizes.p16),
+          ...cards,
         ],
       ),
     );
@@ -223,8 +257,17 @@ class _PreviewPageState extends State<PreviewPage> {
         foregroundColor: AppColors.white,
         elevation: 0,
       ),
-      body: SingleChildScrollView(
-        child: isRecognized ? _buildSuccessLayout() : _buildUnrecognizedFoodState(),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: AppSizes.contentMaxWidth * 2),
+            child: SingleChildScrollView(
+              child: isRecognized
+                  ? _buildSuccessLayout(context)
+                  : _buildUnrecognizedFoodState(context),
+            ),
+          ),
+        ),
       ),
     );
   }

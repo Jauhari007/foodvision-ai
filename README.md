@@ -60,7 +60,7 @@ lib/
 
 Beberapa package Flutter utama yang digunakan dalam project ini:
 
-*   [`tflite_flutter`](https://pub.dev/packages/tflite_flutter) - Menjalankan inferensi model TensorFlow Lite.
+*   [`flutter_litert`](https://pub.dev/packages/flutter_litert) - Menjalankan inferensi model TensorFlow Lite / LiteRT.
 *   [`google_generative_ai`](https://pub.dev/packages/google_generative_ai) - Akses ke API Google Gemini.
 *   [`image_picker`](https://pub.dev/packages/image_picker) - Mengambil gambar dari galeri atau kamera.
 *   [`image_cropper`](https://pub.dev/packages/image_cropper) - Memotong gambar sebelum diumpankan ke model ML.
